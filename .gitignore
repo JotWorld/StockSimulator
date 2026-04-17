@@ -1,0 +1,9 @@
+bin/
+obj/
+.vs/
+.env
+# локальные данные приложения
+*.user
+*.suo
+real_market_state.json
+real_market_state.backup.json
