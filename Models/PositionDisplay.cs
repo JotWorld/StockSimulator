@@ -7,6 +7,8 @@
         public decimal AveragePrice { get; set; }
         public decimal CurrentPrice { get; set; }
         public decimal MarketValue { get; set; }
+        public decimal CostBasis { get; set; }
+        public decimal PortfolioSharePercent { get; set; }
         public decimal PnL { get; set; }
         public decimal PnLPercent { get; set; }
     }

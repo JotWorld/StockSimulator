@@ -10,7 +10,11 @@ namespace StockExchangeSimulator.Services
 {
     public class RealMarketDataService
     {
-        private static readonly HttpClient _httpClient = new();
+        private static readonly HttpClient _httpClient = new()
+        {
+            Timeout = TimeSpan.FromSeconds(15)
+        };
+
         private readonly string _apiKey;
 
         public RealMarketDataService()
@@ -18,58 +22,219 @@ namespace StockExchangeSimulator.Services
             _apiKey = EnvService.Get("FINNHUB_API_KEY");
         }
 
-        public async Task<List<Asset>> GetAssetsAsync(IEnumerable<string> tickers)
+        public async Task<AssetFetchBatchResult> GetAssetsAsync(IEnumerable<string> tickers)
         {
-            var result = new List<Asset>();
+            var normalizedTickers = tickers
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Select(t => t.Trim().ToUpperInvariant())
+                .Distinct()
+                .OrderBy(t => t)
+                .ToList();
 
-            if (string.IsNullOrWhiteSpace(_apiKey))
-                return result;
-
-            foreach (var ticker in tickers
-                         .Where(t => !string.IsNullOrWhiteSpace(t))
-                         .Select(t => t.Trim().ToUpper())
-                         .Distinct())
+            var batchResult = new AssetFetchBatchResult
             {
-                var asset = await GetAssetAsync(ticker);
-                if (asset != null)
-                    result.Add(asset);
+                RequestedCount = normalizedTickers.Count
+            };
+
+            if (normalizedTickers.Count == 0)
+            {
+                batchResult.Errors.Add(new AssetFetchError
+                {
+                    Ticker = "-",
+                    Message = "Список тикеров пуст."
+                });
+
+                return batchResult;
             }
 
-            return result;
+            if (string.IsNullOrWhiteSpace(_apiKey) || _apiKey == "your_api_key_here")
+            {
+                foreach (var ticker in normalizedTickers)
+                {
+                    batchResult.Errors.Add(new AssetFetchError
+                    {
+                        Ticker = ticker,
+                        Message = "Укажи реальный FINNHUB_API_KEY в .env"
+                    });
+                }
+
+                return batchResult;
+            }
+
+            var tasks = normalizedTickers.Select(GetAssetInternalAsync).ToList();
+            var results = await Task.WhenAll(tasks);
+
+            foreach (var result in results.OrderBy(r => r.Ticker))
+            {
+                if (result.Asset != null)
+                {
+                    batchResult.Assets.Add(result.Asset);
+                }
+                else
+                {
+                    batchResult.Errors.Add(new AssetFetchError
+                    {
+                        Ticker = result.Ticker,
+                        Message = result.ErrorMessage
+                    });
+                }
+            }
+
+            return batchResult;
         }
 
-        public async Task<bool> IsValidTickerAsync(string ticker)
+        public async Task<TickerValidationResult> ValidateTickerAsync(string ticker)
         {
-            var asset = await GetAssetAsync(ticker);
-            return asset != null;
+            string normalizedTicker = NormalizeTicker(ticker);
+
+            if (string.IsNullOrWhiteSpace(normalizedTicker))
+            {
+                return new TickerValidationResult
+                {
+                    Ticker = string.Empty,
+                    IsValid = false,
+                    Message = "Тикер пустой."
+                };
+            }
+
+            if (string.IsNullOrWhiteSpace(_apiKey) || _apiKey == "your_api_key_here")
+            {
+                return new TickerValidationResult
+                {
+                    Ticker = normalizedTicker,
+                    IsValid = false,
+                    Message = "Укажи реальный FINNHUB_API_KEY в .env"
+                };
+            }
+
+            var result = await GetAssetInternalAsync(normalizedTicker);
+
+            return new TickerValidationResult
+            {
+                Ticker = normalizedTicker,
+                IsValid = result.Asset != null,
+                Message = result.Asset != null ? "Тикер найден." : result.ErrorMessage,
+                Asset = result.Asset
+            };
         }
 
-        private async Task<Asset?> GetAssetAsync(string ticker)
+        private async Task<SingleAssetFetchResult> GetAssetInternalAsync(string ticker)
         {
             try
             {
                 string url = $"https://finnhub.io/api/v1/quote?symbol={ticker}&token={_apiKey}";
-                string response = await _httpClient.GetStringAsync(url);
+                using var response = await _httpClient.GetAsync(url);
 
-                var quote = JsonSerializer.Deserialize<FinnhubQuote>(response);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new SingleAssetFetchResult
+                    {
+                        Ticker = ticker,
+                        ErrorMessage = $"HTTP {(int)response.StatusCode}"
+                    };
+                }
 
-                if (quote == null || quote.c <= 0)
-                    return null;
+                string responseText = await response.Content.ReadAsStringAsync();
 
-                return new Asset
+                if (string.IsNullOrWhiteSpace(responseText))
+                {
+                    return new SingleAssetFetchResult
+                    {
+                        Ticker = ticker,
+                        ErrorMessage = "Пустой ответ API."
+                    };
+                }
+
+                FinnhubQuote? quote = JsonSerializer.Deserialize<FinnhubQuote>(responseText);
+
+                if (quote == null)
+                {
+                    return new SingleAssetFetchResult
+                    {
+                        Ticker = ticker,
+                        ErrorMessage = "Не удалось разобрать ответ API."
+                    };
+                }
+
+                if (!string.IsNullOrWhiteSpace(quote.error))
+                {
+                    return new SingleAssetFetchResult
+                    {
+                        Ticker = ticker,
+                        ErrorMessage = quote.error
+                    };
+                }
+
+                if (quote.c <= 0)
+                {
+                    return new SingleAssetFetchResult
+                    {
+                        Ticker = ticker,
+                        ErrorMessage = "Котировка не найдена или цена некорректна."
+                    };
+                }
+
+                return new SingleAssetFetchResult
                 {
                     Ticker = ticker,
-                    Name = ticker,
-                    CurrentPrice = quote.c,
-                    Change = quote.d,
-                    ChangePercent = quote.dp,
-                    IsVirtual = false
+                    Asset = new Asset
+                    {
+                        Ticker = ticker,
+                        Name = ticker,
+                        CurrentPrice = quote.c,
+                        Change = quote.d,
+                        ChangePercent = quote.dp,
+                        IsVirtual = false,
+                        LastUpdatedUtc = DateTime.UtcNow
+                    }
                 };
             }
-            catch
+            catch (TaskCanceledException)
             {
-                return null;
+                return new SingleAssetFetchResult
+                {
+                    Ticker = ticker,
+                    ErrorMessage = "Превышено время ожидания ответа API."
+                };
             }
+            catch (HttpRequestException ex)
+            {
+                return new SingleAssetFetchResult
+                {
+                    Ticker = ticker,
+                    ErrorMessage = $"Ошибка сети: {ex.Message}"
+                };
+            }
+            catch (JsonException)
+            {
+                return new SingleAssetFetchResult
+                {
+                    Ticker = ticker,
+                    ErrorMessage = "Некорректный JSON от API."
+                };
+            }
+            catch (Exception ex)
+            {
+                return new SingleAssetFetchResult
+                {
+                    Ticker = ticker,
+                    ErrorMessage = $"Неизвестная ошибка: {ex.Message}"
+                };
+            }
+        }
+
+        private static string NormalizeTicker(string ticker)
+        {
+            return string.IsNullOrWhiteSpace(ticker)
+                ? string.Empty
+                : ticker.Trim().ToUpperInvariant();
+        }
+
+        private class SingleAssetFetchResult
+        {
+            public string Ticker { get; set; } = string.Empty;
+            public Asset? Asset { get; set; }
+            public string ErrorMessage { get; set; } = string.Empty;
         }
 
         private class FinnhubQuote
@@ -77,6 +242,7 @@ namespace StockExchangeSimulator.Services
             public decimal c { get; set; }
             public decimal d { get; set; }
             public decimal dp { get; set; }
+            public string? error { get; set; }
         }
     }
 }

@@ -5,132 +5,549 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Реальный рынок"
-        Height="860"
-        Width="1280"
-        WindowStartupLocation="CenterScreen">
+        Height="1120"
+        Width="1560"
+        MinHeight="900"
+        MinWidth="1320"
+        WindowStartupLocation="CenterScreen"
+        Background="#FFF7F7F7">
 
-    <Grid Margin="12">
+    <Window.Resources>
+        <Style x:Key="SectionBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#FFD8D8D8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="6"/>
+        </Style>
+
+        <Style x:Key="MetricCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#FFF3F6FB"/>
+            <Setter Property="BorderBrush" Value="#FFE0E8F2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+        </Style>
+
+        <Style x:Key="FlatDataGridStyle" TargetType="DataGrid">
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="RowHeaderWidth" Value="0"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="2*"/>
+            <RowDefinition Height="2.0*"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="2*"/>
+            <RowDefinition Height="1.8*"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="2*"/>
+            <RowDefinition Height="2.8*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0"
-                Padding="10"
-                Margin="0 0 0 10"
-                BorderBrush="LightGray"
+                Padding="14"
+                Margin="0 0 0 12"
+                Background="White"
+                BorderBrush="#FFD8D8D8"
                 BorderThickness="1"
-                CornerRadius="6">
+                CornerRadius="8">
             <StackPanel>
-                <WrapPanel Margin="0 0 0 8">
-                    <TextBlock x:Name="BalanceText" FontSize="16" FontWeight="Bold" Margin="0 0 25 0"/>
-                    <TextBlock x:Name="PositionsValueText" FontSize="16" Margin="0 0 25 0"/>
-                    <TextBlock x:Name="TotalValueText" FontSize="16" Margin="0 0 25 0"/>
-                    <TextBlock x:Name="TotalPnLText" FontSize="16"/>
-                </WrapPanel>
+                <UniformGrid Columns="7" Margin="0 0 0 12">
+                    <Border Style="{StaticResource MetricCardStyle}">
+                        <TextBlock x:Name="BalanceText" FontSize="15" FontWeight="Bold" TextWrapping="Wrap"/>
+                    </Border>
+                    <Border Style="{StaticResource MetricCardStyle}">
+                        <TextBlock x:Name="PositionsValueText" FontSize="15" TextWrapping="Wrap"/>
+                    </Border>
+                    <Border Style="{StaticResource MetricCardStyle}">
+                        <TextBlock x:Name="TotalValueText" FontSize="15" TextWrapping="Wrap"/>
+                    </Border>
+                    <Border Style="{StaticResource MetricCardStyle}">
+                        <TextBlock x:Name="UnrealizedPnLText" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                    </Border>
+                    <Border Style="{StaticResource MetricCardStyle}">
+                        <TextBlock x:Name="RealizedPnLText" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                    </Border>
+                    <Border Style="{StaticResource MetricCardStyle}">
+                        <TextBlock x:Name="FeesText" FontSize="15" TextWrapping="Wrap"/>
+                    </Border>
+                    <Border Background="#FFF3F6FB"
+                            BorderBrush="#FFE0E8F2"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="10,8">
+                        <TextBlock x:Name="TotalPnLText" FontSize="15" FontWeight="Bold" TextWrapping="Wrap"/>
+                    </Border>
+                </UniformGrid>
 
-                <WrapPanel VerticalAlignment="Center">
-                    <TextBlock Text="Количество:" VerticalAlignment="Center" Margin="0 0 8 0"/>
-                    <TextBox x:Name="QuantityTextBox" Width="90" Margin="0 0 12 0"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="340"/>
+                    </Grid.ColumnDefinitions>
 
-                    <Button x:Name="BuyButton" Content="Купить" Width="100" Margin="0 0 8 0" Click="Buy_Click"/>
-                    <Button x:Name="SellButton" Content="Продать" Width="100" Margin="0 0 16 0" Click="Sell_Click"/>
+                    <WrapPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="Количество:" VerticalAlignment="Center" Margin="0 0 8 0"/>
+                        <TextBox x:Name="QuantityTextBox"
+                                 Width="90"
+                                 Height="30"
+                                 Margin="0 0 12 0"
+                                 VerticalContentAlignment="Center"/>
 
-                    <TextBlock Text="Тикер:" VerticalAlignment="Center" Margin="0 0 8 0"/>
-                    <TextBox x:Name="TickerTextBox" Width="120" Margin="0 0 8 0"/>
-                    <Button Content="Добавить тикер" Width="130" Margin="0 0 8 0" Click="AddTicker_Click"/>
-                    <Button Content="Удалить тикер" Width="130" Margin="0 0 16 0" Click="RemoveTicker_Click"/>
+                        <Button x:Name="BuyButton"
+                                Content="Купить"
+                                Width="100"
+                                Height="30"
+                                Margin="0 0 8 0"
+                                Click="Buy_Click"/>
 
-                    <Button Content="Обновить сейчас" Width="130" Margin="0 0 12 0" Click="RefreshNow_Click"/>
+                        <Button x:Name="SellButton"
+                                Content="Продать"
+                                Width="100"
+                                Height="30"
+                                Margin="0 0 12 0"
+                                Click="Sell_Click"/>
 
-                    <CheckBox x:Name="AutoUpdateCheckBox"
-                              Content="Автообновление"
-                              VerticalAlignment="Center"
-                              Margin="0 0 8 0"
-                              Checked="AutoUpdateCheckBox_Checked"
-                              Unchecked="AutoUpdateCheckBox_Unchecked"/>
+                        <Button Content="Buy 1"
+                                Width="70"
+                                Height="30"
+                                Margin="0 0 6 0"
+                                Click="QuickBuy1_Click"/>
 
-                    <TextBlock Text="Интервал:" VerticalAlignment="Center" Margin="0 0 8 0"/>
-                    <ComboBox x:Name="RefreshIntervalComboBox"
-                              Width="90"
-                              Margin="0 0 16 0"
-                              SelectionChanged="RefreshIntervalComboBox_SelectionChanged">
-                        <ComboBoxItem Content="5"/>
-                        <ComboBoxItem Content="10"/>
-                        <ComboBoxItem Content="15"/>
-                        <ComboBoxItem Content="30"/>
-                        <ComboBoxItem Content="60"/>
-                    </ComboBox>
+                        <Button Content="Buy 5"
+                                Width="70"
+                                Height="30"
+                                Margin="0 0 6 0"
+                                Click="QuickBuy5_Click"/>
 
-                    <TextBlock Text="Статус:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0 0 6 0"/>
-                    <TextBlock x:Name="StatusText" VerticalAlignment="Center"/>
-                </WrapPanel>
+                        <Button Content="Buy 10"
+                                Width="80"
+                                Height="30"
+                                Margin="0 0 6 0"
+                                Click="QuickBuy10_Click"/>
+
+                        <Button Content="Sell All"
+                                Width="90"
+                                Height="30"
+                                Margin="0 0 16 0"
+                                Click="SellAll_Click"/>
+
+                        <TextBlock Text="Тикер:"
+                                   VerticalAlignment="Center"
+                                   Margin="0 0 8 0"/>
+                        <TextBox x:Name="TickerTextBox"
+                                 Width="120"
+                                 Height="30"
+                                 Margin="0 0 8 0"
+                                 VerticalContentAlignment="Center"/>
+
+                        <Button Content="Добавить тикер"
+                                Width="130"
+                                Height="30"
+                                Margin="0 0 8 0"
+                                Click="AddTicker_Click"/>
+
+                        <Button Content="Удалить тикер"
+                                Width="130"
+                                Height="30"
+                                Margin="0 0 16 0"
+                                Click="RemoveTicker_Click"/>
+
+                        <Button Content="Обновить сейчас"
+                                Width="130"
+                                Height="30"
+                                Margin="0 0 8 0"
+                                Click="RefreshNow_Click"/>
+
+                        <Button Content="Сбросить портфель"
+                                Width="145"
+                                Height="30"
+                                Margin="0 0 12 0"
+                                Click="ResetPortfolio_Click"/>
+
+                        <CheckBox x:Name="AutoUpdateCheckBox"
+                                  Content="Автообновление"
+                                  VerticalAlignment="Center"
+                                  Margin="0 0 8 0"
+                                  Checked="AutoUpdateCheckBox_Checked"
+                                  Unchecked="AutoUpdateCheckBox_Unchecked"/>
+
+                        <TextBlock Text="Интервал:"
+                                   VerticalAlignment="Center"
+                                   Margin="0 0 8 0"/>
+
+                        <ComboBox x:Name="RefreshIntervalComboBox"
+                                  Width="90"
+                                  Height="30"
+                                  Margin="0 0 12 0"
+                                  VerticalContentAlignment="Center"
+                                  SelectionChanged="RefreshIntervalComboBox_SelectionChanged">
+                            <ComboBoxItem Content="5"/>
+                            <ComboBoxItem Content="10"/>
+                            <ComboBoxItem Content="15"/>
+                            <ComboBoxItem Content="30"/>
+                            <ComboBoxItem Content="60"/>
+                        </ComboBox>
+
+                        <TextBlock Text="Поиск watchlist:"
+                                   VerticalAlignment="Center"
+                                   Margin="0 0 8 0"/>
+                        <TextBox x:Name="AssetFilterTextBox"
+                                 Width="150"
+                                 Height="30"
+                                 VerticalContentAlignment="Center"
+                                 TextChanged="AssetFilterTextBox_TextChanged"/>
+                    </WrapPanel>
+
+                    <Border Grid.Column="1"
+                            Padding="10 8"
+                            Margin="12 0 0 0"
+                            Background="#FFF9FAFB"
+                            BorderBrush="#FFE1E5EA"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                        <StackPanel>
+                            <TextBlock Text="Статус" FontWeight="SemiBold" Margin="0 0 0 4"/>
+                            <TextBlock x:Name="StatusText"
+                                       Width="300"
+                                       TextWrapping="Wrap"/>
+                            <TextBlock x:Name="RefreshStatsText"
+                                       Margin="0 8 0 0"
+                                       Foreground="#FF5F6B7A"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
             </StackPanel>
         </Border>
 
-        <TextBlock Grid.Row="1" Text="Котировки" FontSize="16" FontWeight="Bold" Margin="0 0 0 6"/>
+        <TextBlock Grid.Row="1"
+                   Text="Котировки"
+                   FontSize="17"
+                   FontWeight="Bold"
+                   Margin="0 0 0 8"/>
 
-        <DataGrid x:Name="AssetsGrid"
-                  Grid.Row="2"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  SelectionMode="Single"
-                  SelectionChanged="AssetsGrid_SelectionChanged"
-                  Margin="0 0 0 12">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker}" Width="*"/>
-                <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="2*"/>
-                <DataGridTextColumn Header="Цена" Binding="{Binding CurrentPrice, StringFormat=F2}" Width="*"/>
-                <DataGridTextColumn Header="Изм." Binding="{Binding Change, StringFormat=F2}" Width="*"/>
-                <DataGridTextColumn Header="% изм." Binding="{Binding ChangePercent, StringFormat=F2}" Width="*"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <Border Grid.Row="2"
+                Style="{StaticResource SectionBorderStyle}"
+                Margin="0 0 0 14">
+            <DataGrid x:Name="AssetsGrid"
+                      Style="{StaticResource FlatDataGridStyle}"
+                      SelectionMode="Single"
+                      SelectionChanged="AssetsGrid_SelectionChanged">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker}" Width="*"/>
+                    <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="2*"/>
+                    <DataGridTextColumn Header="Цена" Binding="{Binding CurrentPrice, StringFormat=F2}" Width="*"/>
+                    <DataGridTextColumn Header="Изм." Binding="{Binding Change, StringFormat=F2}" Width="*"/>
+                    <DataGridTextColumn Header="% изм." Binding="{Binding ChangePercent, StringFormat=F2}" Width="*"/>
+                    <DataGridTextColumn Header="Обновлено" Binding="{Binding LastUpdatedUtc, StringFormat=HH:mm:ss}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
 
-        <TextBlock Grid.Row="3" Text="Позиции" FontSize="16" FontWeight="Bold" Margin="0 0 0 6"/>
+        <TextBlock Grid.Row="3"
+                   Text="Позиции"
+                   FontSize="17"
+                   FontWeight="Bold"
+                   Margin="0 0 0 8"/>
 
-        <DataGrid x:Name="PositionsGrid"
-                  Grid.Row="4"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  Margin="0 0 0 12">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker}" Width="*"/>
-                <DataGridTextColumn Header="Кол-во" Binding="{Binding Quantity}" Width="*"/>
-                <DataGridTextColumn Header="Средняя цена" Binding="{Binding AveragePrice, StringFormat=F2}" Width="*"/>
-                <DataGridTextColumn Header="Текущая цена" Binding="{Binding CurrentPrice, StringFormat=F2}" Width="*"/>
-                <DataGridTextColumn Header="Стоимость" Binding="{Binding MarketValue, StringFormat=F2}" Width="*"/>
-                <DataGridTextColumn Header="PnL" Binding="{Binding PnL, StringFormat=F2}" Width="*"/>
-                <DataGridTextColumn Header="PnL %" Binding="{Binding PnLPercent, StringFormat=F2}" Width="*"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <Border Grid.Row="4"
+                Style="{StaticResource SectionBorderStyle}"
+                Margin="0 0 0 14">
+            <DataGrid x:Name="PositionsGrid"
+                      Style="{StaticResource FlatDataGridStyle}"
+                      CanUserSortColumns="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker}" Width="*"/>
+                    <DataGridTextColumn Header="Кол-во" Binding="{Binding Quantity}" Width="*"/>
+                    <DataGridTextColumn Header="Средняя цена" Binding="{Binding AveragePrice, StringFormat=F2}" Width="*"/>
+                    <DataGridTextColumn Header="Текущая цена" Binding="{Binding CurrentPrice, StringFormat=F2}" Width="*"/>
+                    <DataGridTextColumn Header="Стоимость" Binding="{Binding MarketValue, StringFormat=F2}" Width="*"/>
+                    <DataGridTextColumn Header="Себестоимость" Binding="{Binding CostBasis, StringFormat=F2}" Width="*"/>
+                    <DataGridTextColumn Header="% портфеля" Binding="{Binding PortfolioSharePercent, StringFormat=F2}" Width="*"/>
 
-        <TextBlock Grid.Row="5" Text="История сделок" FontSize="16" FontWeight="Bold" Margin="0 0 0 6"/>
+                    <DataGridTemplateColumn Header="PnL" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding PnL, StringFormat=F2}"
+                                           Loaded="SignedValueTextBlock_Loaded"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
-        <DataGrid x:Name="TradesGrid"
-                  Grid.Row="6"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  Margin="0 0 0 12">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Время" Binding="{Binding Timestamp, StringFormat=dd.MM.yyyy HH:mm:ss}" Width="1.7*"/>
-                <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker}" Width="*"/>
-                <DataGridTextColumn Header="Тип" Binding="{Binding TradeType}" Width="*"/>
-                <DataGridTextColumn Header="Кол-во" Binding="{Binding Quantity}" Width="*"/>
-                <DataGridTextColumn Header="Цена" Binding="{Binding Price, StringFormat=F2}" Width="*"/>
-                <DataGridTextColumn Header="Сумма" Binding="{Binding TotalAmount, StringFormat=F2}" Width="*"/>
-                <DataGridTextColumn Header="Рынок" Binding="{Binding MarketMode}" Width="*"/>
-            </DataGrid.Columns>
-        </DataGrid>
+                    <DataGridTemplateColumn Header="PnL %" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding PnLPercent, StringFormat=F2}"
+                                           Loaded="SignedValueTextBlock_Loaded"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
 
-        <TextBlock x:Name="LastUpdateText"
-                   Grid.Row="7"
-                   HorizontalAlignment="Right"
-                   FontStyle="Italic"/>
+        <TextBlock Grid.Row="5"
+                   Text="История и аналитика"
+                   FontSize="17"
+                   FontWeight="Bold"
+                   Margin="0 0 0 8"/>
+
+        <Grid Grid.Row="6" Margin="0 0 0 10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <UniformGrid Grid.Row="0" Columns="4" Rows="3" Margin="0 0 0 10">
+                <Border Style="{StaticResource MetricCardStyle}">
+                    <TextBlock x:Name="StatsTotalTradesText" FontSize="14" TextWrapping="Wrap"/>
+                </Border>
+                <Border Style="{StaticResource MetricCardStyle}">
+                    <TextBlock x:Name="StatsBuyTradesText" FontSize="14" TextWrapping="Wrap"/>
+                </Border>
+                <Border Style="{StaticResource MetricCardStyle}">
+                    <TextBlock x:Name="StatsSellTradesText" FontSize="14" TextWrapping="Wrap"/>
+                </Border>
+                <Border Style="{StaticResource MetricCardStyle}">
+                    <TextBlock x:Name="StatsWinRateText" FontSize="14" TextWrapping="Wrap"/>
+                </Border>
+
+                <Border Style="{StaticResource MetricCardStyle}">
+                    <TextBlock x:Name="StatsBuyVolumeText" FontSize="14" TextWrapping="Wrap"/>
+                </Border>
+                <Border Style="{StaticResource MetricCardStyle}">
+                    <TextBlock x:Name="StatsSellVolumeText" FontSize="14" TextWrapping="Wrap"/>
+                </Border>
+                <Border Style="{StaticResource MetricCardStyle}">
+                    <TextBlock x:Name="StatsAverageWinText" FontSize="14" TextWrapping="Wrap"/>
+                </Border>
+                <Border Style="{StaticResource MetricCardStyle}">
+                    <TextBlock x:Name="StatsAverageLossText" FontSize="14" TextWrapping="Wrap"/>
+                </Border>
+
+                <Border Style="{StaticResource MetricCardStyle}">
+                    <TextBlock x:Name="StatsProfitFactorText" FontSize="14" TextWrapping="Wrap"/>
+                </Border>
+                <Border Style="{StaticResource MetricCardStyle}">
+                    <TextBlock x:Name="StatsAverageFeeText" FontSize="14" TextWrapping="Wrap"/>
+                </Border>
+                <Border Style="{StaticResource MetricCardStyle}">
+                    <TextBlock x:Name="StatsBestTickerText" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                </Border>
+                <Border Background="#FFF3F6FB"
+                        BorderBrush="#FFE0E8F2"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="10,8">
+                    <TextBlock x:Name="StatsWorstTickerText" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                </Border>
+            </UniformGrid>
+
+            <Border Grid.Row="1" Style="{StaticResource SectionBorderStyle}">
+                <TabControl x:Name="AnalyticsTabControl"
+                            SelectionChanged="AnalyticsTabControl_SelectionChanged">
+                    <TabItem Header="Сделки">
+                        <Grid Margin="8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0" Margin="0 0 0 8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="110"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0"
+                                           Text="Тикер:"
+                                           VerticalAlignment="Center"/>
+
+                                <TextBox x:Name="TradeTickerFilterTextBox"
+                                         Grid.Column="1"
+                                         Height="30"
+                                         VerticalContentAlignment="Center"
+                                         TextChanged="TradeFilter_Changed"/>
+
+                                <TextBlock Grid.Column="3"
+                                           Text="Тип:"
+                                           VerticalAlignment="Center"/>
+
+                                <ComboBox x:Name="TradeTypeFilterComboBox"
+                                          Grid.Column="4"
+                                          Height="30"
+                                          SelectionChanged="TradeFilter_Changed">
+                                    <ComboBoxItem Content="Все" IsSelected="True"/>
+                                    <ComboBoxItem Content="Buy"/>
+                                    <ComboBoxItem Content="Sell"/>
+                                </ComboBox>
+
+                                <TextBlock Grid.Column="6"
+                                           Text="Период:"
+                                           VerticalAlignment="Center"/>
+
+                                <ComboBox x:Name="TradeDateFilterComboBox"
+                                          Grid.Column="7"
+                                          Height="30"
+                                          SelectionChanged="TradeFilter_Changed">
+                                    <ComboBoxItem Content="Все" IsSelected="True"/>
+                                    <ComboBoxItem Content="Сегодня"/>
+                                    <ComboBoxItem Content="7 дней"/>
+                                    <ComboBoxItem Content="30 дней"/>
+                                </ComboBox>
+
+                                <Button Grid.Column="9"
+                                        Content="Экспорт CSV"
+                                        Width="110"
+                                        Height="30"
+                                        HorizontalAlignment="Right"
+                                        Click="ExportTrades_Click"/>
+                            </Grid>
+
+                            <DataGrid Grid.Row="1"
+                                      x:Name="TradesGrid"
+                                      Style="{StaticResource FlatDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Время" Binding="{Binding Timestamp, StringFormat=dd.MM.yyyy HH:mm:ss}" Width="1.8*"/>
+                                    <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker}" Width="*"/>
+                                    <DataGridTextColumn Header="Тип" Binding="{Binding TradeType}" Width="*"/>
+                                    <DataGridTextColumn Header="Кол-во" Binding="{Binding Quantity}" Width="*"/>
+                                    <DataGridTextColumn Header="Цена" Binding="{Binding Price, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Сумма" Binding="{Binding TotalAmount, StringFormat=F2}" Width="*"/>
+
+                                    <DataGridTemplateColumn Header="Комиссия" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Fee, StringFormat=F2}"
+                                                           Loaded="FeeTextBlock_Loaded"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Header="Realized PnL" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding RealizedPnL, StringFormat=F2}"
+                                                           Loaded="SignedValueTextBlock_Loaded"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTextColumn Header="Рынок" Binding="{Binding MarketMode}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Snapshots">
+                        <Grid Margin="8">
+                            <DataGrid x:Name="SnapshotsGrid"
+                                      Style="{StaticResource FlatDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Время" Binding="{Binding Timestamp, StringFormat=dd.MM.yyyy HH:mm:ss}" Width="1.6*"/>
+                                    <DataGridTextColumn Header="Источник" Binding="{Binding Source}" Width="*"/>
+                                    <DataGridTextColumn Header="Баланс" Binding="{Binding Balance, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Позиции" Binding="{Binding PositionsValue, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Итого" Binding="{Binding TotalValue, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Unrealized" Binding="{Binding UnrealizedPnL, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Realized" Binding="{Binding RealizedPnL, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Total PnL" Binding="{Binding TotalPnL, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Комиссии" Binding="{Binding TotalFees, StringFormat=F2}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Ticker Analytics">
+                        <Grid Margin="8">
+                            <DataGrid x:Name="TickerAnalyticsGrid"
+                                      Style="{StaticResource FlatDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker}" Width="*"/>
+                                    <DataGridTextColumn Header="Buy trades" Binding="{Binding BuyTrades}" Width="*"/>
+                                    <DataGridTextColumn Header="Sell trades" Binding="{Binding SellTrades}" Width="*"/>
+                                    <DataGridTextColumn Header="Куплено" Binding="{Binding BoughtQuantity}" Width="*"/>
+                                    <DataGridTextColumn Header="Продано" Binding="{Binding SoldQuantity}" Width="*"/>
+                                    <DataGridTextColumn Header="Open qty" Binding="{Binding OpenQuantity}" Width="*"/>
+                                    <DataGridTextColumn Header="Buy volume" Binding="{Binding BuyVolume, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Sell volume" Binding="{Binding SellVolume, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Fees" Binding="{Binding Fees, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Realized PnL" Binding="{Binding RealizedPnL, StringFormat=F2}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Equity Curve">
+                        <Grid Margin="8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <WrapPanel Grid.Row="0" Margin="0 0 0 8">
+                                <Border Style="{StaticResource MetricCardStyle}">
+                                    <TextBlock x:Name="ChartMinText" FontSize="14" TextWrapping="Wrap"/>
+                                </Border>
+                                <Border Style="{StaticResource MetricCardStyle}">
+                                    <TextBlock x:Name="ChartMaxText" FontSize="14" TextWrapping="Wrap"/>
+                                </Border>
+                                <Border Style="{StaticResource MetricCardStyle}">
+                                    <TextBlock x:Name="ChartLatestText" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                </Border>
+                                <Border Style="{StaticResource MetricCardStyle}">
+                                    <TextBlock x:Name="ChartPointsText" FontSize="14" TextWrapping="Wrap"/>
+                                </Border>
+                            </WrapPanel>
+
+                            <Border Grid.Row="1"
+                                    BorderBrush="#FFD8D8D8"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Background="White"
+                                    Padding="8">
+                                <Grid>
+                                    <Canvas x:Name="EquityCanvas"
+                                            Background="#FFFDFDFD"
+                                            SizeChanged="EquityCanvas_SizeChanged"/>
+                                    <TextBlock x:Name="EquityEmptyText"
+                                               Text="Недостаточно данных для графика."
+                                               Foreground="#FF7A7A7A"
+                                               FontStyle="Italic"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
+            </Border>
+        </Grid>
+
+        <DockPanel Grid.Row="7" LastChildFill="False">
+            <TextBlock x:Name="LastUpdateText"
+                       DockPanel.Dock="Right"
+                       HorizontalAlignment="Right"
+                       FontStyle="Italic"
+                       Foreground="#FF5F6B7A"/>
+        </DockPanel>
     </Grid>
 </Window>

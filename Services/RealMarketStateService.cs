@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using StockExchangeSimulator.Models;
 
@@ -26,10 +27,10 @@ namespace StockExchangeSimulator.Services
         {
             try
             {
+                Normalize(state);
+
                 if (File.Exists(_filePath))
-                {
                     File.Copy(_filePath, _backupFilePath, true);
-                }
 
                 var options = new JsonSerializerOptions
                 {
@@ -41,7 +42,6 @@ namespace StockExchangeSimulator.Services
             }
             catch
             {
-                // пока молча игнорируем, позже можно добавить логирование
             }
         }
 
@@ -88,10 +88,41 @@ namespace StockExchangeSimulator.Services
 
         private static void Normalize(RealMarketState state)
         {
+            state.Version = Math.Max(state.Version, 3);
+
             state.Positions ??= new();
             state.Trades ??= new();
             state.TrackedTickers ??= new();
             state.Settings ??= new RealMarketSettings();
+            state.LastRefreshStatus ??= string.Empty;
+            state.Snapshots ??= new();
+
+            state.Positions = state.Positions
+                .Where(p => !string.IsNullOrWhiteSpace(p.Ticker) && p.Quantity > 0)
+                .Select(p => new Position
+                {
+                    Ticker = p.Ticker.Trim().ToUpperInvariant(),
+                    Quantity = p.Quantity,
+                    AveragePrice = p.AveragePrice < 0 ? 0 : p.AveragePrice
+                })
+                .ToList();
+
+            state.TrackedTickers = state.TrackedTickers
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Select(t => t.Trim().ToUpperInvariant())
+                .Distinct()
+                .OrderBy(t => t)
+                .ToList();
+
+            int maxSnapshots = EnvService.GetInt("REAL_MARKET_MAX_SNAPSHOTS", 500);
+            if (maxSnapshots <= 0)
+                maxSnapshots = 500;
+
+            state.Snapshots = state.Snapshots
+                .OrderByDescending(s => s.Timestamp)
+                .Take(maxSnapshots)
+                .OrderBy(s => s.Timestamp)
+                .ToList();
 
             if (state.Balance <= 0 && state.Positions.Count == 0 && state.Trades.Count == 0)
                 state.Balance = 10000m;
@@ -102,8 +133,8 @@ namespace StockExchangeSimulator.Services
                 {
                     "AAPL",
                     "MSFT",
-                    "TSLA",
-                    "NVDA"
+                    "NVDA",
+                    "TSLA"
                 };
             }
 
@@ -117,19 +148,21 @@ namespace StockExchangeSimulator.Services
         {
             return new RealMarketState
             {
+                Version = 3,
                 Balance = 10000m,
                 TrackedTickers = new()
                 {
                     "AAPL",
                     "MSFT",
-                    "TSLA",
-                    "NVDA"
+                    "NVDA",
+                    "TSLA"
                 },
                 Settings = new RealMarketSettings
                 {
                     AutoUpdateEnabled = EnvService.GetBool("DEFAULT_AUTO_UPDATE", true),
                     RefreshIntervalSeconds = EnvService.GetInt("DEFAULT_REFRESH_INTERVAL_SECONDS", 15)
-                }
+                },
+                LastRefreshStatus = "Состояние загружено"
             };
         }
     }

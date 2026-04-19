@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 
 namespace StockExchangeSimulator.Services
@@ -51,6 +52,22 @@ namespace StockExchangeSimulator.Services
         public static bool GetBool(string key, bool defaultValue = false)
         {
             return bool.TryParse(Get(key), out bool value) ? value : defaultValue;
+        }
+
+        public static decimal GetDecimal(string key, decimal defaultValue = 0m)
+        {
+            string raw = Get(key);
+
+            if (string.IsNullOrWhiteSpace(raw))
+                return defaultValue;
+
+            if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal invariantValue))
+                return invariantValue;
+
+            if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.CurrentCulture, out decimal localValue))
+                return localValue;
+
+            return defaultValue;
         }
     }
 }

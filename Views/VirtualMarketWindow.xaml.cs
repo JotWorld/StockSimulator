@@ -23,12 +23,13 @@ namespace StockExchangeSimulator.Views
         private void LoadAssets()
         {
             _assets = _marketService.GetAssets();
+            AssetsGrid.ItemsSource = null;
             AssetsGrid.ItemsSource = _assets;
         }
 
         private void UpdateBalance()
         {
-            BalanceText.Text = $"Баланс: {_portfolio.Balance}";
+            BalanceText.Text = $"Баланс: {_portfolio.Balance:F2}";
         }
 
         private Asset? GetSelectedAsset()
@@ -57,9 +58,16 @@ namespace StockExchangeSimulator.Views
                 return;
             }
 
-            _tradingService.BuyAsset(_portfolio, asset, quantity, MarketMode.Virtual, out string message);
+            var result = _tradingService.ExecuteBuyAsset(_portfolio, asset, quantity, MarketMode.Virtual);
+
             UpdateBalance();
-            MessageBox.Show(message);
+
+            if (result.IsSuccess)
+            {
+                QuantityTextBox.Clear();
+            }
+
+            MessageBox.Show(result.Message);
         }
 
         private void Sell_Click(object sender, RoutedEventArgs e)
@@ -78,9 +86,16 @@ namespace StockExchangeSimulator.Views
                 return;
             }
 
-            _tradingService.SellAsset(_portfolio, asset, quantity, MarketMode.Virtual, out string message);
+            var result = _tradingService.ExecuteSellAsset(_portfolio, asset, quantity, MarketMode.Virtual);
+
             UpdateBalance();
-            MessageBox.Show(message);
+
+            if (result.IsSuccess)
+            {
+                QuantityTextBox.Clear();
+            }
+
+            MessageBox.Show(result.Message);
         }
     }
 }
