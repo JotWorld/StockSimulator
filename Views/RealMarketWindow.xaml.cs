@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using StockExchangeSimulator.Data;
 using StockExchangeSimulator.Enums;
 using StockExchangeSimulator.Models;
 using StockExchangeSimulator.Services;
@@ -21,7 +22,7 @@ namespace StockExchangeSimulator.Views
     {
         private readonly RealMarketDataService _marketDataService = new();
         private readonly TradingService _tradingService = new();
-        private readonly RealMarketStateService _stateService = new();
+        private readonly IRealMarketRepository _repository = new SqliteRealMarketRepository(new RealMarketDbService());
         private readonly RealMarketPortfolioService _portfolioService = new();
         private readonly Portfolio _portfolio = new();
         private readonly List<string> _trackedTickers = new();
@@ -78,7 +79,7 @@ namespace StockExchangeSimulator.Views
 
         private void LoadState()
         {
-            var state = _stateService.Load();
+            var state = _repository.LoadState();
 
             _portfolio.Balance = state.Balance;
             _portfolio.Positions = state.Positions ?? new List<Position>();
@@ -110,7 +111,7 @@ namespace StockExchangeSimulator.Views
                 Snapshots = _snapshots
             };
 
-            _stateService.Save(state);
+            _repository.SaveState(state);
         }
 
         private RealMarketSettings CurrentSettings { get; set; } = new();
