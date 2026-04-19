@@ -1,9 +1,15 @@
 ﻿<Application x:Class="StockExchangeSimulator.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:StockExchangeSimulator"
+             xmlns:converters="clr-namespace:StockExchangeSimulator.Converters"
              StartupUri="Views/MainWindow.xaml">
     <Application.Resources>
-         
+        <converters:DecimalToSignedBrushConverter x:Key="DecimalToSignedBrushConverter"/>
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <converters:PositiveDecimalToBoolConverter x:Key="PositiveDecimalToBoolConverter"/>
+        <converters:EnumEqualsConverter x:Key="EnumEqualsConverter"/>
+        <converters:TradeTypeToTextConverter x:Key="TradeTypeToTextConverter"/>
+        <converters:MarketModeToTextConverter x:Key="MarketModeToTextConverter"/>
+        <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
     </Application.Resources>
 </Application>

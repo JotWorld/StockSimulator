@@ -18,9 +18,4 @@
 		</None>
 	</ItemGroup>
 
-	<ItemGroup>
-		<Folder Include="ViewModels\" />
-		<Folder Include="Helpers\" />
-	</ItemGroup>
-
 </Project>
