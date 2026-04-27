@@ -1,37 +1,583 @@
 ﻿<Window x:Class="StockExchangeSimulator.Views.VirtualMarketWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Виртуальный рынок" Height="500" Width="700"
-        WindowStartupLocation="CenterScreen">
-    <Grid Margin="20">
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:helpers="clr-namespace:StockExchangeSimulator.Helpers"
+        mc:Ignorable="d"
+        Title="Виртуальный рынок"
+        MinHeight="850"
+        MinWidth="1320"
+        WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
+        Background="#FFF7F7F7">
+
+    <Window.Resources>
+        <Style x:Key="SectionBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#FFD8D8D8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="8"/>
+        </Style>
+
+        <Style x:Key="MetricCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#FFF3F6FB"/>
+            <Setter Property="BorderBrush" Value="#FFE0E8F2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+        </Style>
+
+        <Style x:Key="FlatDataGridStyle" TargetType="DataGrid">
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="RowHeaderWidth" Value="0"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+            <Setter Property="SelectionUnit" Value="FullRow"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="2.0*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="1.8*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="2.8*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock x:Name="BalanceText"
-                   FontSize="18"
+        <Border Grid.Row="0"
+                Padding="14"
+                Margin="0 0 0 12"
+                Background="White"
+                BorderBrush="#FFD8D8D8"
+                BorderThickness="1"
+                CornerRadius="8">
+            <StackPanel>
+                <UniformGrid Columns="7" Margin="0 0 0 12">
+                    <Border Style="{StaticResource MetricCardStyle}">
+                        <TextBlock FontSize="15"
+                                   FontWeight="Bold"
+                                   TextWrapping="Wrap"
+                                   Text="{Binding Summary.Balance, Mode=OneWay, StringFormat=Баланс: {0:F2}}"/>
+                    </Border>
+
+                    <Border Style="{StaticResource MetricCardStyle}">
+                        <TextBlock FontSize="15"
+                                   TextWrapping="Wrap"
+                                   Text="{Binding Summary.PositionsValue, Mode=OneWay, StringFormat=Позиции: {0:F2}}"/>
+                    </Border>
+
+                    <Border Style="{StaticResource MetricCardStyle}">
+                        <TextBlock FontSize="15"
+                                   TextWrapping="Wrap"
+                                   Text="{Binding Summary.TotalValue, Mode=OneWay, StringFormat=Итого: {0:F2}}"/>
+                    </Border>
+
+                    <Border Style="{StaticResource MetricCardStyle}">
+                        <TextBlock FontSize="15"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap"
+                                   Foreground="{Binding Summary.UnrealizedPnL, Mode=OneWay, Converter={StaticResource DecimalToSignedBrushConverter}}"
+                                   Text="{Binding Summary.UnrealizedPnL, Mode=OneWay, StringFormat=Unrealized: {0:F2}}"/>
+                    </Border>
+
+                    <Border Style="{StaticResource MetricCardStyle}">
+                        <TextBlock FontSize="15"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap"
+                                   Foreground="{Binding Summary.RealizedPnL, Mode=OneWay, Converter={StaticResource DecimalToSignedBrushConverter}}"
+                                   Text="{Binding Summary.RealizedPnL, Mode=OneWay, StringFormat=Realized: {0:F2}}"/>
+                    </Border>
+
+                    <Border Style="{StaticResource MetricCardStyle}">
+                        <TextBlock FontSize="15"
+                                   TextWrapping="Wrap"
+                                   Text="{Binding Summary.TotalFees, Mode=OneWay, StringFormat=Комиссии: {0:F2}}"/>
+                    </Border>
+
+                    <Border Background="#FFF3F6FB"
+                            BorderBrush="#FFE0E8F2"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="10,8">
+                        <TextBlock FontSize="15"
+                                   FontWeight="Bold"
+                                   TextWrapping="Wrap"
+                                   Foreground="{Binding Summary.TotalPnL, Mode=OneWay, Converter={StaticResource DecimalToSignedBrushConverter}}"
+                                   Text="{Binding Summary.TotalPnL, Mode=OneWay, StringFormat=Total PnL: {0:F2}}"/>
+                    </Border>
+                </UniformGrid>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="340"/>
+                    </Grid.ColumnDefinitions>
+
+                    <WrapPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="Количество:"
+                                   VerticalAlignment="Center"
+                                   Margin="0 0 8 0"/>
+
+                        <TextBox Width="90"
+                                 Height="30"
+                                 Margin="0 0 12 0"
+                                 VerticalContentAlignment="Center"
+                                 Text="{Binding QuantityText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <Button Content="Купить"
+                                Width="100"
+                                Height="30"
+                                Margin="0 0 8 0"
+                                Command="{Binding BuyCommand}"/>
+
+                        <Button Content="Продать"
+                                Width="100"
+                                Height="30"
+                                Margin="0 0 12 0"
+                                Command="{Binding SellCommand}"/>
+
+                        <Button Content="Buy 1"
+                                Width="70"
+                                Height="30"
+                                Margin="0 0 6 0"
+                                Command="{Binding QuickBuy1Command}"/>
+
+                        <Button Content="Buy 5"
+                                Width="70"
+                                Height="30"
+                                Margin="0 0 6 0"
+                                Command="{Binding QuickBuy5Command}"/>
+
+                        <Button Content="Buy 10"
+                                Width="80"
+                                Height="30"
+                                Margin="0 0 6 0"
+                                Command="{Binding QuickBuy10Command}"/>
+
+                        <Button Content="Sell All"
+                                Width="90"
+                                Height="30"
+                                Margin="0 0 16 0"
+                                Command="{Binding SellAllCommand}"/>
+
+                        <Button Content="Старт"
+                                Width="90"
+                                Height="30"
+                                Margin="0 0 8 0"
+                                Command="{Binding StartCommand}"/>
+
+                        <Button Content="Пауза"
+                                Width="90"
+                                Height="30"
+                                Margin="0 0 8 0"
+                                Command="{Binding PauseCommand}"/>
+
+                        <Button Content="1 тик"
+                                Width="80"
+                                Height="30"
+                                Margin="0 0 8 0"
+                                Command="{Binding StepCommand}"/>
+
+                        <Button Content="Сброс рынка"
+                                Width="120"
+                                Height="30"
+                                Margin="0 0 12 0"
+                                Command="{Binding ResetMarketCommand}"/>
+
+                        <TextBlock Text="Скорость:"
+                                   VerticalAlignment="Center"
+                                   Margin="0 0 8 0"/>
+
+                        <ComboBox Width="90"
+                                  Height="30"
+                                  Margin="0 0 12 0"
+                                  ItemsSource="{Binding SpeedOptions}"
+                                  SelectedItem="{Binding GameSpeed, Mode=TwoWay}"/>
+
+                        <TextBlock Text="Режим:"
+                                   VerticalAlignment="Center"
+                                   Margin="0 0 8 0"/>
+
+                        <ComboBox Width="110"
+                                  Height="30"
+                                  Margin="0 0 12 0"
+                                  ItemsSource="{Binding MarketModeOptions}"
+                                  SelectedItem="{Binding SelectedMarketMode, Mode=TwoWay}"/>
+
+                        <Button Content="Сбросить портфель"
+                                Width="145"
+                                Height="30"
+                                Margin="0 0 12 0"
+                                Command="{Binding ResetPortfolioCommand}"/>
+
+                        <TextBlock Text="Поиск:"
+                                   VerticalAlignment="Center"
+                                   Margin="0 0 8 0"/>
+
+                        <TextBox Width="150"
+                                 Height="30"
+                                 Margin="0 0 12 0"
+                                 VerticalContentAlignment="Center"
+                                 Text="{Binding AssetFilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock VerticalAlignment="Center"
+                                   Foreground="#FF5F6B7A"
+                                   Text="{Binding MarketSentiment, Mode=OneWay, StringFormat=Sentiment: {0:F2}}"/>
+                    </WrapPanel>
+
+                    <Border Grid.Column="1"
+                            Padding="10 8"
+                            Margin="12 0 0 0"
+                            Background="#FFF9FAFB"
+                            BorderBrush="#FFE1E5EA"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                        <StackPanel>
+                            <TextBlock Text="Статус"
+                                       FontWeight="SemiBold"
+                                       Margin="0 0 0 4"/>
+                            <TextBlock Width="300"
+                                       TextWrapping="Wrap"
+                                       Text="{Binding Status, Mode=OneWay}"/>
+                            <TextBlock Margin="0 8 0 0"
+                                       Foreground="#FF5F6B7A"
+                                       TextWrapping="Wrap"
+                                       Text="{Binding RefreshStats, Mode=OneWay}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Grid.Row="1"
+                   Text="Виртуальные котировки"
+                   FontSize="17"
                    FontWeight="Bold"
-                   Margin="0 0 0 15"/>
+                   Margin="0 0 0 8"/>
 
-        <DataGrid x:Name="AssetsGrid"
-                  Grid.Row="1"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  SelectionMode="Single"
-                  Margin="0 0 0 15">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker}" Width="*"/>
-                <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="2*"/>
-                <DataGridTextColumn Header="Цена" Binding="{Binding CurrentPrice}" Width="*"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <Border Grid.Row="2"
+                Style="{StaticResource SectionBorderStyle}"
+                Margin="0 0 0 12">
+            <DataGrid ItemsSource="{Binding Assets}"
+                      SelectedItem="{Binding SelectedAsset, Mode=TwoWay}"
+                      Style="{StaticResource FlatDataGridStyle}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker, Mode=OneWay}" Width="*"/>
+                    <DataGridTextColumn Header="Название" Binding="{Binding Name, Mode=OneWay}" Width="1.4*"/>
+                    <DataGridTextColumn Header="Цена" Binding="{Binding CurrentPrice, Mode=OneWay, StringFormat=F2}" Width="*"/>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
-            <TextBox x:Name="QuantityTextBox" Width="100" Height="30" Margin="0 0 10 0" Text="1"/>
-            <Button Content="Купить" Width="120" Height="30" Margin="0 0 10 0" Click="Buy_Click"/>
-            <Button Content="Продать" Width="120" Height="30" Click="Sell_Click"/>
-        </StackPanel>
+                    <DataGridTemplateColumn Header="Изм." Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Change, Mode=OneWay, StringFormat=F2}"
+                                           Foreground="{Binding Change, Mode=OneWay, Converter={StaticResource DecimalToSignedBrushConverter}}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="% изм." Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding ChangePercent, Mode=OneWay, StringFormat=F2}"
+                                           Foreground="{Binding ChangePercent, Mode=OneWay, Converter={StaticResource DecimalToSignedBrushConverter}}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Обновлено"
+                                        Binding="{Binding LastUpdatedUtc, Mode=OneWay, StringFormat=dd.MM.yyyy HH:mm:ss}"
+                                        Width="1.5*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <TextBlock Grid.Row="3"
+                   Text="Позиции"
+                   FontSize="17"
+                   FontWeight="Bold"
+                   Margin="0 0 0 8"/>
+
+        <Border Grid.Row="4"
+                Style="{StaticResource SectionBorderStyle}"
+                Margin="0 0 0 12">
+            <DataGrid ItemsSource="{Binding Positions}"
+                      Style="{StaticResource FlatDataGridStyle}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker, Mode=OneWay}" Width="*"/>
+                    <DataGridTextColumn Header="Кол-во" Binding="{Binding Quantity, Mode=OneWay}" Width="*"/>
+                    <DataGridTextColumn Header="Средняя" Binding="{Binding AveragePrice, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                    <DataGridTextColumn Header="Текущая" Binding="{Binding CurrentPrice, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                    <DataGridTextColumn Header="Стоимость" Binding="{Binding MarketValue, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                    <DataGridTextColumn Header="Себестоимость" Binding="{Binding CostBasis, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                    <DataGridTextColumn Header="% портфеля" Binding="{Binding PortfolioSharePercent, Mode=OneWay, StringFormat=F2}" Width="*"/>
+
+                    <DataGridTemplateColumn Header="PnL" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding PnL, Mode=OneWay, StringFormat=F2}"
+                                           Foreground="{Binding PnL, Mode=OneWay, Converter={StaticResource DecimalToSignedBrushConverter}}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="PnL %" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding PnLPercent, Mode=OneWay, StringFormat=F2}"
+                                           Foreground="{Binding PnLPercent, Mode=OneWay, Converter={StaticResource DecimalToSignedBrushConverter}}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <TextBlock Grid.Row="5"
+                   Text="Аналитика и история"
+                   FontSize="17"
+                   FontWeight="Bold"
+                   Margin="0 0 0 8"/>
+
+        <Grid Grid.Row="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.15*"/>
+                <ColumnDefinition Width="1.85*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Style="{StaticResource SectionBorderStyle}"
+                    Margin="0 0 12 0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Virtual Market Stats"
+                                   FontSize="15"
+                                   FontWeight="Bold"
+                                   Margin="4 4 4 10"/>
+
+                        <UniformGrid Columns="2" Margin="4">
+                            <Border Style="{StaticResource MetricCardStyle}">
+                                <TextBlock Text="{Binding Stats.TotalTrades, Mode=OneWay, StringFormat=Всего сделок: {0}}"/>
+                            </Border>
+                            <Border Style="{StaticResource MetricCardStyle}">
+                                <TextBlock Text="{Binding Stats.BuyTrades, Mode=OneWay, StringFormat=Buy: {0}}"/>
+                            </Border>
+                            <Border Style="{StaticResource MetricCardStyle}">
+                                <TextBlock Text="{Binding Stats.SellTrades, Mode=OneWay, StringFormat=Sell: {0}}"/>
+                            </Border>
+                            <Border Style="{StaticResource MetricCardStyle}">
+                                <TextBlock Text="{Binding Stats.WinRatePercent, Mode=OneWay, StringFormat=Win rate: {0:F2}%}"/>
+                            </Border>
+                            <Border Style="{StaticResource MetricCardStyle}">
+                                <TextBlock Text="{Binding Stats.TotalBuyVolume, Mode=OneWay, StringFormat=Buy volume: {0:F2}}"/>
+                            </Border>
+                            <Border Style="{StaticResource MetricCardStyle}">
+                                <TextBlock Text="{Binding Stats.TotalSellVolume, Mode=OneWay, StringFormat=Sell volume: {0:F2}}"/>
+                            </Border>
+                            <Border Style="{StaticResource MetricCardStyle}">
+                                <TextBlock Text="{Binding Stats.TotalFees, Mode=OneWay, StringFormat=Комиссии: {0:F2}}"/>
+                            </Border>
+                            <Border Style="{StaticResource MetricCardStyle}">
+                                <TextBlock Foreground="{Binding Stats.TotalRealizedPnL, Mode=OneWay, Converter={StaticResource DecimalToSignedBrushConverter}}"
+                                           Text="{Binding Stats.TotalRealizedPnL, Mode=OneWay, StringFormat=Realized: {0:F2}}"/>
+                            </Border>
+                            <Border Style="{StaticResource MetricCardStyle}">
+                                <TextBlock Text="{Binding BotCount, Mode=OneWay, StringFormat=Ботов: {0}}"/>
+                            </Border>
+                            <Border Style="{StaticResource MetricCardStyle}">
+                                <TextBlock Text="{Binding Tick, Mode=OneWay, StringFormat=Тик: {0}}"/>
+                            </Border>
+                            <Border Style="{StaticResource MetricCardStyle}">
+                                <TextBlock Text="{Binding SelectedMarketMode, Mode=OneWay, StringFormat=Режим: {0}}"/>
+                            </Border>
+                            <Border Style="{StaticResource MetricCardStyle}">
+                                <TextBlock Text="{Binding SimulatedTime, Mode=OneWay, StringFormat=Время: {0:HH:mm:ss}}"/>
+                            </Border>
+                        </UniformGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Style="{StaticResource SectionBorderStyle}">
+                <TabControl>
+                    <TabItem Header="Trades">
+                        <Grid Margin="8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <DockPanel Grid.Row="0" Margin="0 0 0 8">
+                                <TextBlock Text="История сделок игрока"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"/>
+                                <Button Content="Экспорт CSV"
+                                        Width="110"
+                                        Height="30"
+                                        DockPanel.Dock="Right"
+                                        Command="{Binding ExportTradesCommand}"/>
+                            </DockPanel>
+
+                            <DataGrid Grid.Row="1"
+                                      ItemsSource="{Binding Trades}"
+                                      Style="{StaticResource FlatDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Время" Binding="{Binding Timestamp, Mode=OneWay, StringFormat=dd.MM.yyyy HH:mm:ss}" Width="1.8*"/>
+                                    <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker, Mode=OneWay}" Width="*"/>
+                                    <DataGridTemplateColumn Header="Тип" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding TradeType, Mode=OneWay, Converter={StaticResource TradeTypeToTextConverter}}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Кол-во" Binding="{Binding Quantity, Mode=OneWay}" Width="*"/>
+                                    <DataGridTextColumn Header="Цена" Binding="{Binding Price, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Сумма" Binding="{Binding TotalAmount, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Комиссия" Binding="{Binding Fee, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                                    <DataGridTemplateColumn Header="Realized PnL" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding RealizedPnL, Mode=OneWay, StringFormat=F2}"
+                                                           Foreground="{Binding RealizedPnL, Mode=OneWay, Converter={StaticResource DecimalToSignedBrushConverter}}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="Рынок" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding MarketMode, Mode=OneWay, Converter={StaticResource MarketModeToTextConverter}}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Market News">
+                        <Grid Margin="8">
+                            <DataGrid ItemsSource="{Binding News}"
+                                      Style="{StaticResource FlatDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Время" Binding="{Binding Time, Mode=OneWay, StringFormat=HH:mm:ss}" Width="1.1*"/>
+                                    <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker, Mode=OneWay}" Width="*"/>
+                                    <DataGridTextColumn Header="Новость" Binding="{Binding Title, Mode=OneWay}" Width="3*"/>
+                                    <DataGridTemplateColumn Header="Impact %" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding ImpactPercent, Mode=OneWay, StringFormat=F2}"
+                                                           Foreground="{Binding ImpactPercent, Mode=OneWay, Converter={StaticResource DecimalToSignedBrushConverter}}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Осталось" Binding="{Binding RemainingTicks, Mode=OneWay}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Market Trades">
+                        <Grid Margin="8">
+                            <DataGrid ItemsSource="{Binding MarketTrades}"
+                                      Style="{StaticResource FlatDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Время" Binding="{Binding Time, Mode=OneWay, StringFormat=HH:mm:ss}" Width="1.1*"/>
+                                    <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker, Mode=OneWay}" Width="*"/>
+                                    <DataGridTextColumn Header="Цена" Binding="{Binding Price, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Кол-во" Binding="{Binding Quantity, Mode=OneWay}" Width="*"/>
+                                    <DataGridTextColumn Header="Причина" Binding="{Binding Reason, Mode=OneWay}" Width="1.5*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Snapshots">
+                        <Grid Margin="8">
+                            <DataGrid ItemsSource="{Binding Snapshots}"
+                                      Style="{StaticResource FlatDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Время" Binding="{Binding Timestamp, Mode=OneWay, StringFormat=dd.MM.yyyy HH:mm:ss}" Width="1.6*"/>
+                                    <DataGridTextColumn Header="Источник" Binding="{Binding Source, Mode=OneWay}" Width="*"/>
+                                    <DataGridTextColumn Header="Баланс" Binding="{Binding Balance, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Позиции" Binding="{Binding PositionsValue, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Итого" Binding="{Binding TotalValue, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Unrealized" Binding="{Binding UnrealizedPnL, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Realized" Binding="{Binding RealizedPnL, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                                    <DataGridTemplateColumn Header="Total PnL" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding TotalPnL, Mode=OneWay, StringFormat=F2}"
+                                                           Foreground="{Binding TotalPnL, Mode=OneWay, Converter={StaticResource DecimalToSignedBrushConverter}}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="Комиссии" Binding="{Binding TotalFees, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Ticker Analytics">
+                        <Grid Margin="8">
+                            <DataGrid ItemsSource="{Binding TickerAnalytics}"
+                                      Style="{StaticResource FlatDataGridStyle}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Тикер" Binding="{Binding Ticker, Mode=OneWay}" Width="*"/>
+                                    <DataGridTextColumn Header="Buy trades" Binding="{Binding BuyTrades, Mode=OneWay}" Width="*"/>
+                                    <DataGridTextColumn Header="Sell trades" Binding="{Binding SellTrades, Mode=OneWay}" Width="*"/>
+                                    <DataGridTextColumn Header="Куплено" Binding="{Binding BoughtQuantity, Mode=OneWay}" Width="*"/>
+                                    <DataGridTextColumn Header="Продано" Binding="{Binding SoldQuantity, Mode=OneWay}" Width="*"/>
+                                    <DataGridTextColumn Header="Open qty" Binding="{Binding OpenQuantity, Mode=OneWay}" Width="*"/>
+                                    <DataGridTextColumn Header="Buy volume" Binding="{Binding BuyVolume, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Sell volume" Binding="{Binding SellVolume, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                                    <DataGridTextColumn Header="Fees" Binding="{Binding Fees, Mode=OneWay, StringFormat=F2}" Width="*"/>
+                                    <DataGridTemplateColumn Header="Realized PnL" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding RealizedPnL, Mode=OneWay, StringFormat=F2}"
+                                                           Foreground="{Binding RealizedPnL, Mode=OneWay, Converter={StaticResource DecimalToSignedBrushConverter}}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Equity Curve">
+                        <Grid Margin="8">
+                            <Border BorderBrush="#FFD8D8D8"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Background="White"
+                                    Padding="8">
+                                <Canvas Background="#FFF9FAFB"
+                                        helpers:EquityChartBehavior.ItemsSource="{Binding Snapshots}" />
+                            </Border>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
+            </Border>
+        </Grid>
+
+        <DockPanel Grid.Row="7" LastChildFill="False">
+            <TextBlock DockPanel.Dock="Right"
+                       HorizontalAlignment="Right"
+                       FontStyle="Italic"
+                       Foreground="#FF5F6B7A"
+                       Text="{Binding LastUpdateText, Mode=OneWay}"/>
+        </DockPanel>
     </Grid>
 </Window>

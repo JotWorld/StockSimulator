@@ -5,11 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Реальный рынок"
-        Height="1100"
-        Width="1560"
-        MinHeight="900"
+        MinHeight="850"
         MinWidth="1320"
         WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         Background="#FFF7F7F7">
 
     <Window.Resources>
