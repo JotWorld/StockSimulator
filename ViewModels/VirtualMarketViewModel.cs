@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Input;
 using System.Windows.Threading;
+using StockExchangeSimulator.Data;
 using StockExchangeSimulator.Enums;
 using StockExchangeSimulator.Models;
 using StockExchangeSimulator.Models.VirtualMarket;
@@ -18,6 +19,8 @@ namespace StockExchangeSimulator.ViewModels
         private readonly RealMarketPortfolioService _portfolioService = new();
         private readonly IDialogService _dialogService = new DialogService();
         private readonly DispatcherTimer _uiTimer;
+        private readonly IVirtualMarketRepository _stateRepository =
+            new SqliteVirtualMarketRepository(new VirtualMarketDbService());
 
         private readonly Portfolio _portfolio = new() { Balance = 10000m };
         private readonly List<Asset> _assets = new();
@@ -119,6 +122,7 @@ namespace StockExchangeSimulator.ViewModels
                 _engine.GameSpeedMultiplier = value;
                 OnPropertyChanged();
                 Status = $"Скорость симуляции: x{value:0.##}";
+                SaveState();
             }
         }
 
@@ -130,6 +134,7 @@ namespace StockExchangeSimulator.ViewModels
                 _engine.MarketMode = value;
                 OnPropertyChanged();
                 Status = $"Режим рынка: {value}";
+                SaveState();
             }
         }
 
@@ -160,6 +165,7 @@ namespace StockExchangeSimulator.ViewModels
             SellAllCommand = new RelayCommand(SellAll, CanSellAll);
             ResetPortfolioCommand = new RelayCommand(ResetPortfolio);
             ExportTradesCommand = new RelayCommand(ExportTrades, () => Trades.Count > 0);
+            LoadState();
 
             _engine.MarketUpdated += RefreshFromEngine;
 
@@ -171,7 +177,10 @@ namespace StockExchangeSimulator.ViewModels
             _uiTimer.Start();
 
             RefreshFromEngine();
-            CaptureSnapshot("Initial");
+            if (_snapshots.Count == 0)
+                CaptureSnapshot("Initial");
+            else
+                RefreshSnapshotsCollection();
         }
 
         private void StartMarket()
@@ -206,6 +215,7 @@ namespace StockExchangeSimulator.ViewModels
             _engine.Reset();
             Status = "Виртуальный рынок сброшен.";
             CaptureSnapshot("Market Reset");
+            SaveState();
         }
 
         private void ExecuteBuy(int quantity)
@@ -230,6 +240,7 @@ namespace StockExchangeSimulator.ViewModels
 
             QuantityText = "1";
             Status = result.Message;
+            SaveState();
         }
 
         private void ExecuteSell(int quantity)
@@ -254,6 +265,7 @@ namespace StockExchangeSimulator.ViewModels
 
             QuantityText = "1";
             Status = result.Message;
+            SaveState();
         }
 
         private void SellAll()
@@ -288,6 +300,7 @@ namespace StockExchangeSimulator.ViewModels
             CaptureSnapshot("Portfolio Reset");
 
             Status = "Виртуальный портфель сброшен.";
+            SaveState();
         }
 
         private void ExportTrades()
@@ -317,6 +330,61 @@ namespace StockExchangeSimulator.ViewModels
 
             File.WriteAllText(filePath, sb.ToString(), Encoding.UTF8);
             Status = $"Экспортировано: {filePath}";
+        }
+
+        private void LoadState()
+        {
+            try
+            {
+                var state = _stateRepository.LoadState();
+
+                _portfolio.Balance = state.Balance;
+                _portfolio.Positions.Clear();
+                _portfolio.Positions.AddRange(state.Positions);
+
+                _tradingService.SetTrades(state.Trades);
+
+                _snapshots.Clear();
+                _snapshots.AddRange(state.Snapshots);
+
+                _engine.GameSpeedMultiplier = state.GameSpeed;
+                _engine.MarketMode = state.MarketMode;
+
+                Status = string.IsNullOrWhiteSpace(state.LastStatus)
+                    ? "Состояние виртуального рынка загружено."
+                    : state.LastStatus;
+            }
+            catch (Exception ex)
+            {
+                Status = $"Не удалось загрузить состояние виртуального рынка: {ex.Message}";
+            }
+        }
+
+        private void SaveState()
+        {
+            try
+            {
+                _stateRepository.SaveState(new VirtualMarketState
+                {
+                    Version = 1,
+                    Balance = _portfolio.Balance,
+                    Positions = _portfolio.Positions.ToList(),
+                    Trades = _tradingService.Trades
+                        .Where(t => t.MarketMode == MarketMode.Virtual)
+                        .OrderBy(t => t.Timestamp)
+                        .ToList(),
+                    Snapshots = _snapshots
+                        .OrderBy(s => s.Timestamp)
+                        .ToList(),
+                    GameSpeed = _engine.GameSpeedMultiplier,
+                    MarketMode = _engine.MarketMode,
+                    LastStatus = Status
+                });
+            }
+            catch (Exception ex)
+            {
+                Status = $"Не удалось сохранить состояние виртуального рынка: {ex.Message}";
+            }
         }
 
         private void RefreshFromEngine()
